@@ -63,5 +63,19 @@ Related recipes
 View counter (hanya 1x per 24 jam per user)
 Tombol favorit
 
-
 ✅ Contact Page dengan form validation & FAQ
+
+
+
+✅ Fase 6 Hampir Selesai!
+Sampai di sini kamu sudah punya:
+
+✅ FavoritePage — daftar resep favorit dengan hapus
+✅ ProfilePage — edit profil, avatar, password, stats
+✅ MyRecipes — kelola resep dengan filter status
+✅ SubmitRecipe — multi-step form super lengkap:
+
+Step 1: Info dasar + thumbnail + tags
+Step 2: Bahan-bahan dinamis
+Step 3: Langkah-langkah dengan foto
+Step 4: Galeri foto tambahan
