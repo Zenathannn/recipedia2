@@ -20,11 +20,9 @@ use App\Livewire\Admin\ManageComments;
 use App\Livewire\Admin\ContactMessages;
 
 // ═══════════════════════════════════════════
-//  PUBLIC ROUTES - sementara pakai closure
+//  PUBLIC ROUTES
 // ═══════════════════════════════════════════
-Route::get('/', function () {
-    return 'Home Page - Coming Soon';
-})->name('home');
+Route::get('/', HomePage::class)->name('home');
 
 Route::get('/search', SearchPage::class)->name('search');
 Route::get('/category/{slug}', CategoryPage::class)->name('category');
@@ -43,29 +41,29 @@ Route::middleware(['auth', 'role.user'])->group(function () {
     Route::get('/favourites', FavoritePage::class)->name('favourites');
     Route::get('/profile', ProfilePage::class)->name('profile');
     Route::get('/my-recipes', MyRecipes::class)->name('my-recipes');
-    // Route::get('/submit-recipe', SubmitRecipe::class)->name('submit-recipe');
-    // Route::get('/edit-recipe/{id}', EditRecipe::class)->name('edit-recipe');
+    Route::get('/submit-recipe', SubmitRecipe::class)->name('submit-recipe');
+    Route::get('/edit-recipe/{id}', EditRecipe::class)->name('edit-recipe');
 });
 
 // ═══════════════════════════════════════════
 //  ADMIN ROUTES - sementara di-comment
 // ═══════════════════════════════════════════
-// Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-//     // Route::get('/dashboard', Dashboard::class)->name('dashboard');
-//     // Route::get('/recipes', ManageRecipes::class)->name('recipes');
-//     // Route::get('/users', ManageUsers::class)->name('users');
-//     // Route::get('/categories', ManageCategories::class)->name('categories');
-//     // Route::get('/tags', ManageTags::class)->name('tags');
-//     // Route::get('/comments', ManageComments::class)->name('comments');
-//     // Route::get('/messages', ContactMessages::class)->name('messages');
-// });
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/recipes', ManageRecipes::class)->name('recipes');
+    Route::get('/users', ManageUsers::class)->name('users');
+    Route::get('/categories', ManageCategories::class)->name('categories');
+    Route::get('/tags', ManageTags::class)->name('tags');
+    Route::get('/comments', ManageComments::class)->name('comments');
+    Route::get('/messages', ContactMessages::class)->name('messages');
+});
 
 // ═══════════════════════════════════════════
 //  REDIRECT SETELAH LOGIN
 // ═══════════════════════════════════════════
-// Route::middleware('auth')->get('/dashboard', function () {
-//     if (auth()->user()->isAdmin()) {
-//         return redirect()->route('home'); // sementara redirect ke home
-//     }
-//     return redirect()->route('home');
-// })->name('dashboard');
+Route::middleware('auth')->get('/dashboard', function () {
+    if (auth()->user()->isAdmin()) {
+        return redirect()->route('home'); // sementara redirect ke home
+    }
+    return redirect()->route('home');
+})->name('dashboard');

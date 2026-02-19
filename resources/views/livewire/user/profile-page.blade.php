@@ -53,7 +53,7 @@
                                     class="w-24 h-24 rounded-full object-cover ring-4 ring-primary-200" />
                                 @else
                                 <img src="{{ auth()->user()->avatar_url }}"
-                                    alt="{{ name }}"
+                                    alt="{{ auth()->user()->name }}"
                                     class="w-24 h-24 rounded-full object-cover ring-4 ring-primary-200" />
                                 @endif
                                 <label class="absolute bottom-0 right-0 w-8 h-8 rounded-full

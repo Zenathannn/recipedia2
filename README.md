@@ -79,3 +79,7 @@ Step 1: Info dasar + thumbnail + tags
 Step 2: Bahan-bahan dinamis
 Step 3: Langkah-langkah dengan foto
 Step 4: Galeri foto tambahan
+
+
+
+DONE COYYY

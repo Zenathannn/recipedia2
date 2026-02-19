@@ -15,16 +15,16 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-#[Title('Buat Resep Baru')]
-class SubmitRecipe extends Component
+#[Title('Edit Resep')]
+class EditRecipe extends Component
 {
     use WithFileUploads;
 
-    // Multi-step
+    public Recipe $recipe;
     public int $currentStep = 1;
     public int $totalSteps = 4;
 
-    // Step 1: Basic Info
+    // Step 1
     public string $title = '';
     public string $description = '';
     public ?int $category_id = null;
@@ -33,63 +33,95 @@ class SubmitRecipe extends Component
     public int $servings = 4;
     public string $difficulty = 'sedang';
     public $thumbnail;
+    public ?string $existingThumbnail = null;
     public array $selectedTags = [];
 
-    // Step 2: Ingredients
-    public array $ingredients = [
-        ['name' => '', 'amount' => '', 'unit' => '', 'notes' => '']
-    ];
+    // Step 2
+    public array $ingredients = [];
 
-    // Step 3: Steps
-    public array $steps = [
-        ['instruction' => '', 'duration' => null, 'image' => null]
-    ];
+    // Step 3
+    public array $steps = [];
 
-    // Step 4: Additional Images
+    // Step 4
+    public array $existingImages = [];
     public array $additionalImages = [];
 
-    protected array $units = [
-        'gram',
-        'kg',
-        'ml',
-        'liter',
-        'sdm',
-        'sdt',
-        'buah',
-        'siung',
-        'lembar',
-        'batang',
-        'bungkus',
-        'sachet'
-    ];
+    public function mount(int $id): void
+    {
+        $this->recipe = Recipe::with(['tags', 'ingredients', 'steps', 'images'])
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
 
-    // ── Validation Rules per Step ────────────────────
+        // Load data
+        $this->title              = $this->recipe->title;
+        $this->description        = $this->recipe->description;
+        $this->category_id        = $this->recipe->category_id;
+        $this->prep_time          = $this->recipe->prep_time;
+        $this->cook_time          = $this->recipe->cook_time;
+        $this->servings           = $this->recipe->servings;
+        $this->difficulty         = $this->recipe->difficulty;
+        $this->existingThumbnail  = $this->recipe->thumbnail;
+        $this->selectedTags       = $this->recipe->tags->pluck('id')->toArray();
+
+        // Load ingredients
+        $this->ingredients = $this->recipe->ingredients->map(function ($ingredient) {
+            return [
+                'id'     => $ingredient->id,
+                'name'   => $ingredient->name,
+                'amount' => $ingredient->amount ?? '',
+                'unit'   => $ingredient->unit ?? '',
+                'notes'  => $ingredient->notes ?? '',
+            ];
+        })->toArray();
+
+        if (empty($this->ingredients)) {
+            $this->ingredients = [['id' => null, 'name' => '', 'amount' => '', 'unit' => '', 'notes' => '']];
+        }
+
+        // Load steps
+        $this->steps = $this->recipe->steps->map(function ($step) {
+            return [
+                'id'          => $step->id,
+                'instruction' => $step->instruction,
+                'duration'    => $step->duration,
+                'image'       => null,
+                'existing_image' => $step->image,
+            ];
+        })->toArray();
+
+        if (empty($this->steps)) {
+            $this->steps = [['id' => null, 'instruction' => '', 'duration' => null, 'image' => null, 'existing_image' => null]];
+        }
+
+        // Load existing images
+        $this->existingImages = $this->recipe->images->map(function ($image) {
+            return [
+                'id'   => $image->id,
+                'path' => $image->image_path,
+            ];
+        })->toArray();
+    }
+
     protected function rulesForStep(int $step): array
     {
         return match ($step) {
             1 => [
-                'title'       => 'required|min:5|max:200|unique:recipes,title',
+                'title'       => 'required|min:5|max:200|unique:recipes,title,' . $this->recipe->id,
                 'description' => 'required|min:20|max:1000',
                 'category_id' => 'required|exists:categories,id',
                 'prep_time'   => 'required|integer|min:1|max:999',
                 'cook_time'   => 'required|integer|min:1|max:999',
                 'servings'    => 'required|integer|min:1|max:50',
                 'difficulty'  => 'required|in:mudah,sedang,sulit',
-                'thumbnail'   => 'required|image|max:5120', // 5MB
-                'selectedTags' => 'array|max:5',
+                'thumbnail'   => 'nullable|image|max:5120',
             ],
             2 => [
                 'ingredients'         => 'required|array|min:1',
                 'ingredients.*.name'  => 'required|string|max:100',
-                'ingredients.*.amount' => 'nullable|string|max:20',
-                'ingredients.*.unit'  => 'nullable|string|max:20',
-                'ingredients.*.notes' => 'nullable|string|max:200',
             ],
             3 => [
                 'steps'               => 'required|array|min:1',
                 'steps.*.instruction' => 'required|string|min:10|max:1000',
-                'steps.*.duration'    => 'nullable|integer|min:1|max:999',
-                'steps.*.image'       => 'nullable|image|max:3072', // 3MB
             ],
             4 => [
                 'additionalImages.*' => 'nullable|image|max:3072',
@@ -98,36 +130,9 @@ class SubmitRecipe extends Component
         };
     }
 
-    protected function messagesForStep(int $step): array
-    {
-        return match ($step) {
-            1 => [
-                'title.required'       => 'Judul resep wajib diisi',
-                'title.unique'         => 'Judul resep sudah digunakan',
-                'description.required' => 'Deskripsi wajib diisi',
-                'description.min'      => 'Deskripsi minimal 20 karakter',
-                'category_id.required' => 'Pilih kategori',
-                'thumbnail.required'   => 'Upload foto resep',
-                'thumbnail.image'      => 'File harus berupa gambar',
-                'thumbnail.max'        => 'Ukuran foto maksimal 5MB',
-            ],
-            2 => [
-                'ingredients.required'      => 'Minimal 1 bahan harus diisi',
-                'ingredients.*.name.required' => 'Nama bahan wajib diisi',
-            ],
-            3 => [
-                'steps.required'               => 'Minimal 1 langkah harus diisi',
-                'steps.*.instruction.required' => 'Instruksi langkah wajib diisi',
-                'steps.*.instruction.min'      => 'Instruksi minimal 10 karakter',
-            ],
-            default => [],
-        };
-    }
-
-    // ── Add/Remove Items ─────────────────────────────
     public function addIngredient(): void
     {
-        $this->ingredients[] = ['name' => '', 'amount' => '', 'unit' => '', 'notes' => ''];
+        $this->ingredients[] = ['id' => null, 'name' => '', 'amount' => '', 'unit' => '', 'notes' => ''];
     }
 
     public function removeIngredient(int $index): void
@@ -138,7 +143,7 @@ class SubmitRecipe extends Component
 
     public function addStep(): void
     {
-        $this->steps[] = ['instruction' => '', 'duration' => null, 'image' => null];
+        $this->steps[] = ['id' => null, 'instruction' => '', 'duration' => null, 'image' => null, 'existing_image' => null];
     }
 
     public function removeStep(int $index): void
@@ -147,20 +152,26 @@ class SubmitRecipe extends Component
         $this->steps = array_values($this->steps);
     }
 
+    public function removeExistingImage(int $index): void
+    {
+        $image = $this->existingImages[$index] ?? null;
+        if ($image) {
+            RecipeImage::find($image['id'])?->delete();
+            Storage::disk('public')->delete($image['path']);
+            unset($this->existingImages[$index]);
+            $this->existingImages = array_values($this->existingImages);
+        }
+    }
+
     public function removeAdditionalImage(int $index): void
     {
         unset($this->additionalImages[$index]);
         $this->additionalImages = array_values($this->additionalImages);
     }
 
-    // ── Navigation ───────────────────────────────────
     public function nextStep(): void
     {
-        $this->validate(
-            $this->rulesForStep($this->currentStep),
-            $this->messagesForStep($this->currentStep)
-        );
-
+        $this->validate($this->rulesForStep($this->currentStep));
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
         }
@@ -180,25 +191,26 @@ class SubmitRecipe extends Component
         }
     }
 
-    // ── Submit ───────────────────────────────────────
-    public function submit()
+    public function update()
     {
-        // Validate all steps
         foreach (range(1, $this->totalSteps) as $step) {
-            $this->validate(
-                $this->rulesForStep($step),
-                $this->messagesForStep($step)
-            );
+            $this->validate($this->rulesForStep($step));
         }
 
         DB::beginTransaction();
         try {
-            // Upload thumbnail
-            $thumbnailPath = $this->thumbnail->store('thumbnails', 'public');
+            // Update thumbnail
+            if ($this->thumbnail) {
+                if ($this->existingThumbnail) {
+                    Storage::disk('public')->delete($this->existingThumbnail);
+                }
+                $thumbnailPath = $this->thumbnail->store('thumbnails', 'public');
+            } else {
+                $thumbnailPath = $this->existingThumbnail;
+            }
 
-            // Create recipe
-            $recipe = Recipe::create([
-                'user_id'     => auth()->id(),
+            // Update recipe
+            $this->recipe->update([
                 'category_id' => $this->category_id,
                 'title'       => $this->title,
                 'slug'        => Str::slug($this->title) . '-' . Str::random(6),
@@ -208,19 +220,18 @@ class SubmitRecipe extends Component
                 'cook_time'   => $this->cook_time,
                 'servings'    => $this->servings,
                 'difficulty'  => $this->difficulty,
-                'status'      => 'pending', // Menunggu approval admin
+                'status'      => 'pending', // Re-submit untuk approval
             ]);
 
-            // Attach tags
-            if (!empty($this->selectedTags)) {
-                $recipe->tags()->attach($this->selectedTags);
-            }
+            // Sync tags
+            $this->recipe->tags()->sync($this->selectedTags);
 
-            // Save ingredients
+            // Update ingredients
+            $this->recipe->ingredients()->delete();
             foreach ($this->ingredients as $index => $ingredient) {
                 if (!empty($ingredient['name'])) {
                     Ingredient::create([
-                        'recipe_id' => $recipe->id,
+                        'recipe_id' => $this->recipe->id,
                         'name'      => $ingredient['name'],
                         'amount'    => $ingredient['amount'] ?? null,
                         'unit'      => $ingredient['unit'] ?? null,
@@ -230,15 +241,19 @@ class SubmitRecipe extends Component
                 }
             }
 
-            // Save steps
+            // Update steps
+            $this->recipe->steps()->delete();
             foreach ($this->steps as $index => $step) {
-                $stepImagePath = null;
+                $stepImagePath = $step['existing_image'] ?? null;
                 if (isset($step['image']) && $step['image']) {
+                    if ($stepImagePath) {
+                        Storage::disk('public')->delete($stepImagePath);
+                    }
                     $stepImagePath = $step['image']->store('step-images', 'public');
                 }
 
                 Step::create([
-                    'recipe_id'   => $recipe->id,
+                    'recipe_id'   => $this->recipe->id,
                     'step_number' => $index + 1,
                     'instruction' => $step['instruction'],
                     'duration'    => $step['duration'] ?? null,
@@ -246,15 +261,16 @@ class SubmitRecipe extends Component
                 ]);
             }
 
-            // Save additional images
+            // Add new images
             if (!empty($this->additionalImages)) {
+                $currentOrder = count($this->existingImages);
                 foreach ($this->additionalImages as $index => $image) {
                     if ($image) {
                         $imagePath = $image->store('recipe-images', 'public');
                         RecipeImage::create([
-                            'recipe_id'  => $recipe->id,
+                            'recipe_id'  => $this->recipe->id,
                             'image_path' => $imagePath,
-                            'order'      => $index + 1,
+                            'order'      => $currentOrder + $index + 1,
                         ]);
                     }
                 }
@@ -264,8 +280,8 @@ class SubmitRecipe extends Component
 
             $this->dispatch('toast', [
                 'type'    => 'success',
-                'title'   => 'Resep berhasil dibuat! 🎉',
-                'message' => 'Menunggu persetujuan admin.',
+                'title'   => 'Resep berhasil diperbarui! ✅',
+                'message' => 'Menunggu persetujuan ulang dari admin.',
             ]);
 
             return redirect()->route('my-recipes');
@@ -274,18 +290,17 @@ class SubmitRecipe extends Component
 
             $this->dispatch('toast', [
                 'type'    => 'error',
-                'title'   => 'Gagal membuat resep',
+                'title'   => 'Gagal memperbarui resep',
                 'message' => $e->getMessage(),
             ]);
         }
     }
 
-    // ── Render ───────────────────────────────────────
     public function render()
     {
         $categories = Category::active()->get();
         $allTags = Tag::orderBy('name')->get();
 
-        return view('livewire.user.submit-recipe', compact('categories', 'allTags'));
+        return view('livewire.user.edit-recipe', compact('categories', 'allTags'));
     }
 }
