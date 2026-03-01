@@ -9,7 +9,7 @@
      }"
     :class="scrolled
         ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-stone-200/50 py-3'
-        : 'bg-transparent py-5'"
+        : 'bg-white/90 backdrop-blur-md shadow-sm shadow-stone-200/40 border-b border-stone-200/60 py-4'"
     class="fixed top-0 inset-x-0 z-50 transition-all duration-500">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,15 +88,17 @@
                 <a href="{{ route('submit-recipe') }}"
                     class="flex items-center gap-2 px-4 py-2 text-sm font-semibold
                                   text-white rounded-xl
-                                  bg-gradient-to-r from-gold-500 to-gold-600
-                                  hover:from-gold-600 hover:to-gold-700
+                                  bg-gradient-to-r from-yellow-500 to-yellow-600
+                                  hover:from-yellow-600 hover:to-yellow-700
                                   shadow-md hover:shadow-lg hover:-translate-y-0.5
                                   transition-all duration-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4v16m8-8H4" />
                     </svg>
-                    Bagikan Resep
+                    <span>
+                        Bagikan Resep
+                    </span>
                 </a>
                 @endif
 

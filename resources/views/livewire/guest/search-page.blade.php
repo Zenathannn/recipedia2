@@ -1,7 +1,7 @@
 <div class="min-h-screen pt-24 pb-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {{-- ══ Header Section ═══════════════════════ --}}
+        {{-- Header Section --}}
         <div class="mb-10">
             <h1 class="font-display text-4xl md:text-5xl font-bold text-stone-900 mb-3">
                 Cari <span class="gradient-text">Resep Favoritmu</span>
@@ -13,7 +13,7 @@
 
         <div class="flex flex-col lg:flex-row gap-8">
 
-            {{-- ══ SIDEBAR FILTERS ══════════════════ --}}
+            {{-- Sidebar Filters --}}
             <aside class="lg:w-72 flex-shrink-0">
 
                 {{-- Mobile Toggle --}}
@@ -21,7 +21,7 @@
                     class="lg:hidden w-full flex items-center justify-between
                                px-4 py-3 rounded-xl bg-white border border-stone-200
                                text-stone-700 font-semibold text-sm mb-4">
-                    <span>🔍 Filter & Urutkan</span>
+                    <span>Filter & Urutkan</span>
                     <svg class="w-5 h-5" :class="{ 'rotate-180': $wire.showFilters }"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -36,7 +36,7 @@
                     {{-- Search Box --}}
                     <div class="bg-white rounded-2xl border border-stone-200 p-5">
                         <label class="block text-sm font-semibold text-stone-700 mb-3">
-                            🔍 Kata Kunci
+                            Kata Kunci
                         </label>
                         <input type="text"
                             wire:model.live.debounce.500ms="search"
@@ -49,7 +49,7 @@
                     {{-- Sort --}}
                     <div class="bg-white rounded-2xl border border-stone-200 p-5">
                         <label class="block text-sm font-semibold text-stone-700 mb-3">
-                            📊 Urutkan
+                            Urutkan
                         </label>
                         <select wire:model.live="sortBy"
                             class="w-full px-4 py-2.5 rounded-xl border border-stone-200
@@ -64,10 +64,10 @@
                     {{-- Categories --}}
                     <div class="bg-white rounded-2xl border border-stone-200 p-5">
                         <label class="block text-sm font-semibold text-stone-700 mb-3">
-                            🗂️ Kategori
+                            Kategori
                         </label>
                         <div class="space-y-2">
-                            <button wire:click="$set('category', null)"
+                            <button type="button" wire:click.prevent="$set('category', null)"
                                 class="w-full text-left px-3 py-2 rounded-lg text-sm
                                            transition-all duration-200
                                            {{ !$category
@@ -92,14 +92,14 @@
                     {{-- Difficulty --}}
                     <div class="bg-white rounded-2xl border border-stone-200 p-5">
                         <label class="block text-sm font-semibold text-stone-700 mb-3">
-                            ⚡ Tingkat Kesulitan
+                            Tingkat Kesulitan
                         </label>
                         <div class="space-y-2">
                             @foreach([
                             ['value' => '', 'label' => 'Semua Level', 'color' => 'stone'],
-                            ['value' => 'mudah', 'label' => '✅ Mudah', 'color' => 'green'],
-                            ['value' => 'sedang', 'label' => '⚠️ Sedang', 'color' => 'yellow'],
-                            ['value' => 'sulit', 'label' => '🔥 Sulit', 'color' => 'red'],
+                            ['value' => 'mudah', 'label' => 'Mudah', 'color' => 'green'],
+                            ['value' => 'sedang', 'label' => 'Sedang', 'color' => 'yellow'],
+                            ['value' => 'sulit', 'label' => 'Sulit', 'color' => 'red'],
                             ] as $diff)
                             <button wire:click="$set('difficulty', '{{ $diff['value'] }}')"
                                 class="w-full text-left px-3 py-2 rounded-lg text-sm
@@ -116,11 +116,11 @@
                     {{-- Tags --}}
                     <div class="bg-white rounded-2xl border border-stone-200 p-5">
                         <label class="block text-sm font-semibold text-stone-700 mb-3">
-                            🏷️ Tag
+                            Tag
                         </label>
                         <div class="flex flex-wrap gap-2">
                             @foreach($allTags as $tag)
-                            <button wire:click="toggleTag({{ $tag->id }})"
+                            <button type="button" wire:click.prevent="toggleTag({{ $tag->id }})"
                                 class="badge transition-all duration-200
                                                {{ in_array($tag->id, $tags)
                                                    ? 'bg-primary-600 text-white ring-2 ring-primary-300'
@@ -137,13 +137,13 @@
                         class="w-full px-4 py-3 rounded-xl bg-red-50 text-red-600
                                        hover:bg-red-100 font-semibold text-sm
                                        transition-all duration-200">
-                        🗑️ Hapus Semua Filter
+                        Hapus Semua Filter
                     </button>
                     @endif
                 </div>
             </aside>
 
-            {{-- ══ MAIN CONTENT ═════════════════════ --}}
+            {{-- Main Content --}}
             <main class="flex-1 min-w-0">
 
                 {{-- Active Filters --}}
@@ -151,7 +151,7 @@
                 <div class="bg-primary-50 border border-primary-200 rounded-2xl p-4 mb-6">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-sm font-semibold text-primary-900">
-                            🔍 Filter Aktif:
+                            Filter Aktif:
                         </span>
                         <button wire:click="clearFilters"
                             class="text-xs text-primary-600 hover:text-primary-700
@@ -163,21 +163,21 @@
                         @if($search)
                         <span class="badge bg-primary-600 text-white">
                             "{{ $search }}"
-                            <button wire:click="$set('search', '')"
+                            <button type="button" wire:click.prevent="$set('search', '')"
                                 class="ml-1 hover:text-red-200">×</button>
                         </span>
                         @endif
                         @if($category)
                         <span class="badge bg-primary-600 text-white">
                             Kategori: {{ $categories->firstWhere('slug', $category)?->name }}
-                            <button wire:click="$set('category', null)"
+                            <button type="button" wire:click.prevent="$set('category', null)"
                                 class="ml-1 hover:text-red-200">×</button>
                         </span>
                         @endif
                         @if($difficulty)
                         <span class="badge bg-primary-600 text-white">
                             {{ ucfirst($difficulty) }}
-                            <button wire:click="$set('difficulty', '')"
+                            <button type="button" wire:click.prevent="$set('difficulty', '')"
                                 class="ml-1 hover:text-red-200">×</button>
                         </span>
                         @endif
@@ -186,7 +186,7 @@
                         @if($tag)
                         <span class="badge bg-primary-600 text-white">
                             {{ $tag->name }}
-                            <button wire:click="toggleTag({{ $tagId }})"
+                            <button type="button" wire:click.prevent="toggleTag({{ $tagId }})"
                                 class="ml-1 hover:text-red-200">×</button>
                         </span>
                         @endif

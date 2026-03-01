@@ -4,6 +4,9 @@ namespace App\Livewire\Guest;
 
 use App\Models\Category;
 use App\Models\Recipe;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 
@@ -45,42 +48,74 @@ class HomePage extends Component
     // ── Render ───────────────────────────────────────────
     public function render()
     {
-        $categories = Category::active()->withCount([
-            'recipes' => fn($q) => $q->where('status', 'approved'),
-        ])->get();
+        $homeData = Cache::remember('homepage.data', now()->addMinutes(5), function () {
+            $heroImageFiles = File::glob(storage_path('app/public/hero/*.{jpg,jpeg,png,webp,avif}'), GLOB_BRACE) ?: [];
+            sort($heroImageFiles);
+            $heroImages = array_map(
+                static fn(string $path): string => asset('storage/hero/' . basename($path)),
+                $heroImageFiles
+            );
 
-        $featuredRecipes = Recipe::approved()
-            ->featured()
-            ->with(['user', 'category', 'tags'])
-            ->withCount('favorites')
-            ->latest()
-            ->take(6)
-            ->get();
+            return [
+                'heroImages' => $heroImages,
+                'categories' => Category::active()->withCount([
+                    'recipes' => fn($q) => $q->where('status', 'approved'),
+                ])->get(),
+                'featuredRecipes' => Recipe::approved()
+                    ->featured()
+                    ->with(['user', 'category', 'tags'])
+                    ->withCount('favorites')
+                    ->latest()
+                    ->take(6)
+                    ->get(),
+                'latestRecipes' => Recipe::approved()
+                    ->with(['user', 'category', 'tags'])
+                    ->withCount('favorites')
+                    ->latest()
+                    ->take(8)
+                    ->get(),
+                'popularRecipes' => Recipe::approved()
+                    ->with(['user', 'category'])
+                    ->withCount('favorites')
+                    ->orderByDesc('views_count')
+                    ->take(4)
+                    ->get(),
+                'totalRecipes' => Recipe::approved()->count(),
+                'totalChefs' => User::where('role', 'user')->count(),
+            ];
+        });
 
-        $latestRecipes = Recipe::approved()
-            ->with(['user', 'category'])
-            ->withCount('favorites')
-            ->latest()
-            ->take(8)
-            ->get();
+        $categories = $homeData['categories'];
+        $heroImages = $homeData['heroImages'] ?? [];
+        $featuredRecipes = $homeData['featuredRecipes'];
+        $latestRecipes = $homeData['latestRecipes'];
+        $popularRecipes = $homeData['popularRecipes'];
+        $totalRecipes = $homeData['totalRecipes'];
+        $totalChefs = $homeData['totalChefs'];
+        $favoritedRecipeIds = [];
 
-        $popularRecipes = Recipe::approved()
-            ->with(['user', 'category'])
-            ->withCount('favorites')
-            ->orderByDesc('views_count')
-            ->take(4)
-            ->get();
+        if (auth()->check()) {
+            $visibleRecipeIds = $featuredRecipes->pluck('id')
+                ->merge($latestRecipes->pluck('id'))
+                ->unique()
+                ->values();
 
-        $totalRecipes = Recipe::approved()->count();
-        $totalChefs   = \App\Models\User::where('role', 'user')->count();
+            $favoritedRecipeIds = auth()->user()
+                ->favorites()
+                ->whereIn('recipe_id', $visibleRecipeIds)
+                ->pluck('recipe_id')
+                ->all();
+        }
 
         return view('livewire.guest.home-page', compact(
+            'heroImages',
             'categories',
             'featuredRecipes',
             'latestRecipes',
             'popularRecipes',
             'totalRecipes',
             'totalChefs',
+            'favoritedRecipeIds',
         ));
     }
 }

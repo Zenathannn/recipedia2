@@ -101,9 +101,11 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         @foreach($categories as $category)
                         <button type="button"
-                            wire:click="$set('category_id', {{ $category->id }})"
+                            wire:key="category-{{ $category->id }}"
+                            wire:click="selectCategory({{ $category->id }})"
                             class="flex flex-col items-center gap-2 p-4 rounded-2xl
                                                border-2 transition-all duration-200
+                                               cursor-pointer
                                                {{ $category_id === $category->id
                                                    ? 'border-primary-600 bg-primary-50'
                                                    : 'border-stone-200 hover:border-stone-300' }}">
@@ -227,14 +229,10 @@
                     <div class="flex flex-wrap gap-2">
                         @foreach($allTags as $tag)
                         <button type="button"
-                            wire:click="
-                                            @if(in_array($tag->id, $selectedTags))
-                                                $set('selectedTags', {{ json_encode(array_values(array_diff($selectedTags, [$tag->id]))) }})
-                                            @elseif(count($selectedTags) < 5)
-                                                $set('selectedTags', {{ json_encode(array_merge($selectedTags, [$tag->id])) }})
-                                            @endif
-                                        "
+                            wire:key="tag-{{ $tag->id }}"
+                            wire:click="toggleTag({{ $tag->id }})"
                             class="badge transition-all duration-200
+                                               cursor-pointer
                                                {{ in_array($tag->id, $selectedTags)
                                                    ? 'bg-primary-600 text-white ring-2 ring-primary-300'
                                                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200' }}">
@@ -526,16 +524,16 @@
                     Lanjutkan →
                     </button>
                     @else
-                    <button type="button" wire:click="submit"
-                        wire:loading.attr="disabled"
+                    <button type="button" wire:click.prevent="submit"
+                        wire:loading.attr="disabled" wire:target="submit"
                         class="flex items-center gap-2 px-8 py-3 rounded-xl
                                    bg-gradient-to-r from-primary-500 to-primary-600
                                    hover:from-primary-600 hover:to-primary-700
                                    text-white font-bold text-sm shadow-lg hover:shadow-xl
                                    disabled:opacity-50 disabled:cursor-not-allowed
                                    transition-all duration-200">
-                        <span wire:loading.remove>🎉 Submit Resep</span>
-                        <span wire:loading>Mengupload...</span>
+                        <span wire:loading.remove wire:target="submit">Submit Resep</span>
+                        <span wire:loading wire:target="submit">Mengupload...</span>
                     </button>
                     @endif
             </div>
@@ -554,3 +552,4 @@
         </div>
     </div>
 </div>
+

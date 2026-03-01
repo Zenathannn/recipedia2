@@ -14,6 +14,7 @@ use Livewire\Attributes\Title;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 #[Title('Buat Resep Baru')]
 class SubmitRecipe extends Component
@@ -180,15 +181,57 @@ class SubmitRecipe extends Component
         }
     }
 
+    public function selectCategory(int $categoryId): void
+    {
+        $this->category_id = $categoryId;
+    }
+
+    public function toggleTag(int $tagId): void
+    {
+        if (in_array($tagId, $this->selectedTags, true)) {
+            $this->selectedTags = array_values(array_filter(
+                $this->selectedTags,
+                fn(int $id): bool => $id !== $tagId
+            ));
+            return;
+        }
+
+        if (count($this->selectedTags) >= 5) {
+            return;
+        }
+
+        $this->selectedTags[] = $tagId;
+    }
+
     // ── Submit ───────────────────────────────────────
     public function submit()
     {
-        // Validate all steps
+        // Validate all steps and jump to the first invalid step.
+        $stepLabels = [
+            1 => 'Info Dasar',
+            2 => 'Bahan',
+            3 => 'Langkah',
+            4 => 'Foto',
+        ];
+
         foreach (range(1, $this->totalSteps) as $step) {
-            $this->validate(
-                $this->rulesForStep($step),
-                $this->messagesForStep($step)
-            );
+            try {
+                $this->validate(
+                    $this->rulesForStep($step),
+                    $this->messagesForStep($step)
+                );
+            } catch (ValidationException $e) {
+                $this->currentStep = $step;
+
+                $this->dispatch(
+                    'toast',
+                    type: 'error',
+                    title: 'Data belum lengkap',
+                    message: 'Lengkapi bagian ' . ($stepLabels[$step] ?? 'form') . ' terlebih dahulu.'
+                );
+
+                throw $e;
+            }
         }
 
         DB::beginTransaction();
@@ -262,21 +305,23 @@ class SubmitRecipe extends Component
 
             DB::commit();
 
-            $this->dispatch('toast', [
-                'type'    => 'success',
-                'title'   => 'Resep berhasil dibuat! 🎉',
-                'message' => 'Menunggu persetujuan admin.',
-            ]);
+            $this->dispatch(
+                'toast',
+                type: 'success',
+                title: 'Resep berhasil dibuat!',
+                message: 'Menunggu persetujuan admin.'
+            );
 
             return redirect()->route('my-recipes');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            $this->dispatch('toast', [
-                'type'    => 'error',
-                'title'   => 'Gagal membuat resep',
-                'message' => $e->getMessage(),
-            ]);
+            $this->dispatch(
+                'toast',
+                type: 'error',
+                title: 'Gagal membuat resep',
+                message: $e->getMessage()
+            );
         }
     }
 
@@ -284,8 +329,13 @@ class SubmitRecipe extends Component
     public function render()
     {
         $categories = Category::active()->get();
+        if ($categories->isEmpty()) {
+            $categories = Category::query()->orderBy('order')->orderBy('name')->get();
+        }
+
         $allTags = Tag::orderBy('name')->get();
 
         return view('livewire.user.submit-recipe', compact('categories', 'allTags'));
     }
 }
+

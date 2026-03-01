@@ -83,3 +83,14 @@ Step 4: Galeri foto tambahan
 
 
 DONE COYYY
+
+
+user :
+zaidan@gmail.com
+zaidan123
+rasya@gmail.com
+rasya123
+
+admin : 
+admin@recipedia.com
+admin123

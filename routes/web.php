@@ -63,7 +63,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // ═══════════════════════════════════════════
 Route::middleware('auth')->get('/dashboard', function () {
     if (auth()->user()->isAdmin()) {
-        return redirect()->route('home'); // sementara redirect ke home
+        return redirect()->route('admin.dashboard');
     }
     return redirect()->route('home');
 })->name('dashboard');

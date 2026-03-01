@@ -1,10 +1,11 @@
 @props([
 'recipe',
 'dark' => false,
+'isFav' => null,
 ])
 
 @php
-$isFav = auth()->check() && auth()->user()->hasFavorited($recipe);
+$isFav = $isFav ?? (auth()->check() && auth()->user()->hasFavorited($recipe));
 @endphp
 
 <article class="recipe-card group relative overflow-hidden rounded-3xl

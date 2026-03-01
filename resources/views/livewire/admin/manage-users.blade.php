@@ -4,7 +4,7 @@
             <h2 class="font-display text-2xl font-bold text-stone-900">Kelola Pengguna</h2>
             <p class="text-stone-500 text-sm">Manajemen akun admin dan user</p>
         </div>
-        <button wire:click="openCreateModal"
+        <button type="button" wire:click.prevent="openCreateModal"
             class="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700">
             Tambah Pengguna
         </button>
@@ -58,11 +58,11 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                <button wire:click="openEditModal({{ $user->id }})"
+                                <button type="button" wire:click.prevent="openEditModal({{ $user->id }})"
                                     class="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-medium hover:bg-amber-200">
                                     Edit
                                 </button>
-                                <button wire:click="confirmDelete({{ $user->id }})"
+                                <button type="button" wire:click.prevent="confirmDelete({{ $user->id }})"
                                     class="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200">
                                     Hapus
                                 </button>
@@ -132,11 +132,11 @@
                     @error('password') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
                 </div>
                 <div class="flex gap-3">
-                    <button wire:click="closeFormModal"
+                    <button type="button" wire:click.prevent="closeFormModal"
                         class="flex-1 px-4 py-2 rounded-xl bg-stone-100 text-stone-700 font-semibold hover:bg-stone-200">
                         Batal
                     </button>
-                    <button wire:click="save"
+                    <button type="button" wire:click.prevent="save"
                         class="flex-1 px-4 py-2 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700">
                         Simpan
                     </button>
@@ -152,11 +152,11 @@
                 <p class="text-sm text-stone-600">Pengguna akan dihapus permanen. Lanjutkan?</p>
                 @error('delete') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
                 <div class="flex gap-3">
-                    <button wire:click="closeDeleteModal"
+                    <button type="button" wire:click.prevent="closeDeleteModal"
                         class="flex-1 px-4 py-2 rounded-xl bg-stone-100 text-stone-700 font-semibold hover:bg-stone-200">
                         Batal
                     </button>
-                    <button wire:click="delete"
+                    <button type="button" wire:click.prevent="delete"
                         class="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700">
                         Hapus
                     </button>

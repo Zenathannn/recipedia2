@@ -37,37 +37,37 @@ class Recipe extends Model
     // ── Relasi ──────────────────────────────────────
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class); // satu resep dibuat oleh satu user (many-to-one)
     }
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class); // satu resep masuk ke dalam satu kategori (many-to-one)
     }
 
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'recipe_tag');
+        return $this->belongsToMany(Tag::class, 'recipe_tag'); // satu resep bisa punya banyak tag, dan satu tag bisa dipakai di banyak resep (many-to-many)
     }
 
     public function images()
     {
-        return $this->hasMany(RecipeImage::class)->orderBy('order');
+        return $this->hasMany(RecipeImage::class)->orderBy('order'); // satu resep bisa punya banyak gambar (one-to-many)
     }
 
     public function ingredients()
     {
-        return $this->hasMany(Ingredient::class)->orderBy('order');
+        return $this->hasMany(Ingredient::class)->orderBy('order'); // satu resep bisa punya banyak bahan (one-to-many)
     }
 
     public function steps()
     {
-        return $this->hasMany(Step::class)->orderBy('step_number');
+        return $this->hasMany(Step::class)->orderBy('step_number'); // satu resep bisa punya banyak langkah (one-to-many)
     }
 
     public function comments()
     {
-        return $this->hasMany(Comment::class)
+        return $this->hasMany(Comment::class) // satu resep bisa punya banyak komentar (one-to-many)
             ->whereNull('parent_id')
             ->where('is_approved', true)
             ->latest();
@@ -86,44 +86,44 @@ class Recipe extends Model
     // ── Scope ────────────────────────────────────────
     public function scopeApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', 'approved'); // hanya ambil resep yang sudah disetujui
     }
 
     public function scopeFeatured($query)
     {
-        return $query->where('is_featured', true);
+        return $query->where('is_featured', true); // hanya ambil resep yang ditandai sebagai unggulan
     }
 
     public function scopeByCategory($query, $categorySlug)
     {
-        return $query->whereHas('category', fn($q) => $q->where('slug', $categorySlug));
+        return $query->whereHas('category', fn($q) => $q->where('slug', $categorySlug)); // filter resep berdasarkan slug kategori
     }
 
     // ── Helper ───────────────────────────────────────
-    public function getThumbnailUrlAttribute(): string
+    public function getThumbnailUrlAttribute(): string // ambil url gambar thumbnail
     {
         if ($this->thumbnail) {
-            return asset('storage/' . $this->thumbnail);
+            return asset('storage/' . $this->thumbnail); 
         }
         return asset('images/recipe-default.jpg');
     }
 
-    public function getTotalTimeAttribute(): int
+    public function getTotalTimeAttribute(): int // hitung total waktu (persiapan + memasak)
     {
-        return $this->prep_time + $this->cook_time;
+        return $this->prep_time + $this->cook_time; 
     }
 
-    public function getDifficultyColorAttribute(): string
+    public function getDifficultyColorAttribute(): string // berikan kelas warna berdasarkan tingkat kesulitan
     {
         return match ($this->difficulty) {
-            'mudah'  => 'text-green-600 bg-green-100',
+            'mudah'  => 'text-green-600 bg-green-100', 
             'sedang' => 'text-yellow-600 bg-yellow-100',
             'sulit'  => 'text-red-600 bg-red-100',
             default  => 'text-gray-600 bg-gray-100',
         };
     }
 
-    public function getStatusColorAttribute(): string
+    public function getStatusColorAttribute(): string // berikan kelas warna berdasarkan status resep
     {
         return match ($this->status) {
             'approved' => 'text-green-600 bg-green-100',
@@ -134,7 +134,7 @@ class Recipe extends Model
         };
     }
 
-    public function incrementViews(): void
+    public function incrementViews(): void // fungsi untuk menambah jumlah views saat resep dilihat
     {
         $this->increment('views_count');
     }
